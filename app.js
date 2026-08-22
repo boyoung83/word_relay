@@ -204,12 +204,12 @@ function startListening() {
     recognizing = false;
     setMicState("idle");
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-      setStatus(`🚫 마이크를 사용할 수 없어요. (원인: ${ev.error})`);
+      setStatus(`🚫 음성 인식이 차단됐어요. (원인: ${ev.error}) — 도움말은 ❓ 버튼!`);
       showKeyboard(true);
-      openHelp();
+      autoHelp();
     } else if (ev.error === "audio-capture") {
       setStatus("🎙️ 마이크를 찾을 수 없어요. 마이크가 연결되어 있나요?");
-      openHelp();
+      autoHelp();
     } else if (ev.error === "network") {
       setStatus("📶 음성 인식에 인터넷이 필요해요. 연결을 확인해 주세요!");
     } else if (game.playing && game.turn === "player") {
@@ -260,6 +260,14 @@ async function ensureMicPermission() {
 
 function openHelp() {
   $("#help-overlay").classList.remove("hidden");
+}
+
+// 오류로 인한 자동 열림은 판당 1번만 (누를 때마다 뜨면 게임을 방해한다)
+let helpAutoShown = false;
+function autoHelp() {
+  if (helpAutoShown) return;
+  helpAutoShown = true;
+  openHelp();
 }
 
 // 카카오톡·네이버·인스타그램 등 인앱 브라우저는 마이크를 막는 경우가 많다
@@ -341,10 +349,10 @@ async function runMicDiagnosis() {
     r.onstart = () => finish("✅ 음성 인식 서비스: 정상! 이제 될 거예요. 🎉");
     r.onerror = (ev) => {
       if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-        finish(`❌ 마이크는 되는데 <b>음성 인식 서비스</b>만 차단됐어요. (${ev.error})`);
-        out.push("👉 안드로이드 크롬은 음성 인식을 <b>'Google' 앱</b>에 맡겨요. 휴대폰 <b>설정 → 애플리케이션 → Google → 권한 → 마이크</b>를 '허용'으로 바꿔 주세요!");
+        finish(`❌ 마이크는 되는데 <b>음성 인식 서비스</b>만 차단됐어요. (${ev.error}${ev.message ? " / " + ev.message : ""})`);
+        out.push("👉 <b>Google 앱</b>과 <b>Google Play 서비스</b>의 마이크 권한을 '허용'으로! (설정 → 애플리케이션)");
+        out.push("👉 삼성 폰이라면: 설정 → 애플리케이션 → <b>기본 앱 선택 → 디지털 어시스턴트 앱</b>이 <b>Google</b>인지 확인!");
         out.push("👉 바꾼 뒤 크롬을 완전히 껐다가 다시 열어 주세요.");
-        out.push("👉 그래도 안 되면: 설정 → 애플리케이션 → <b>Google Play 서비스</b> → 권한 → 마이크도 '허용'!");
       }
       else if (ev.error === "network")
         finish("❌ 인터넷 연결이 필요해요. 와이파이/데이터를 확인해 주세요!");
@@ -730,7 +738,7 @@ function init() {
       ensureMicPermission().then((ok) => {
         if (!ok) {
           showKeyboard(true);
-          openHelp();
+          autoHelp();
         }
       });
     }
