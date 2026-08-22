@@ -70,6 +70,7 @@ header {
   cursor: pointer;
 }
 .icon-btn:active { transform: translateY(2px); }
+.hdr-btns { display: flex; gap: 6px; }
 
 /* ---------- 채팅 영역 ---------- */
 #chat {
@@ -329,6 +330,21 @@ footer {
   padding: 10px;
   cursor: pointer;
 }
+
+.banner { margin: 0 16px 8px; }
+.help-list {
+  list-style: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 4px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #5b688c;
+}
+.help-list b { color: var(--ink); }
+.retry-fail { color: var(--bad); font-size: 0.9rem; margin-top: 8px; }
 
 #confetti {
   position: fixed;

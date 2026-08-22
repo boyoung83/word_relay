@@ -204,8 +204,14 @@ function startListening() {
     recognizing = false;
     setMicState("idle");
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-      setStatus("🚫 마이크를 사용할 수 없어요. 브라우저에서 마이크를 허용해 주세요!");
+      setStatus("🚫 마이크를 사용할 수 없어요.");
       showKeyboard(true);
+      openHelp();
+    } else if (ev.error === "audio-capture") {
+      setStatus("🎙️ 마이크를 찾을 수 없어요. 마이크가 연결되어 있나요?");
+      openHelp();
+    } else if (ev.error === "network") {
+      setStatus("📶 음성 인식에 인터넷이 필요해요. 연결을 확인해 주세요!");
     } else if (game.playing && game.turn === "player") {
       setStatus("🙉 잘 안 들렸어요. 마이크를 누르고 다시 말해 줄래요?");
     }
@@ -233,6 +239,43 @@ function setMicState(state) {
   btn.classList.toggle("disabled", state === "disabled");
   $("#mic-label").textContent =
     state === "listening" ? "듣는 중..." : state === "disabled" ? "기다려요" : "말하기";
+}
+
+/* ---------------- 마이크 권한 / 도움말 ---------------- */
+let micReady = false;
+
+// getUserMedia로 권한을 먼저 받아 두면 음성 인식이 훨씬 안정적으로 시작된다
+async function ensureMicPermission() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return !!sttSupported;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    micReady = true;
+    return true;
+  } catch (e) {
+    micReady = false;
+    return false;
+  }
+}
+
+function openHelp() {
+  $("#help-overlay").classList.remove("hidden");
+}
+
+// 카카오톡·네이버·인스타그램 등 인앱 브라우저는 마이크를 막는 경우가 많다
+const INAPP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|; wv\)/i;
+function detectInApp() {
+  if (INAPP_RE.test(navigator.userAgent)) $("#inapp-banner").classList.remove("hidden");
+}
+
+async function copyGameUrl() {
+  const url = location.href;
+  try {
+    await navigator.clipboard.writeText(url);
+    $("#copy-url-btn").textContent = "✅ 복사했어요!";
+  } catch (e) {
+    window.prompt("아래 주소를 길게 눌러 복사하세요", url);
+  }
 }
 
 /* ---------------- UI 헬퍼 ---------------- */
@@ -595,6 +638,14 @@ function init() {
 
   $("#start-btn").addEventListener("click", () => {
     getAudio(); // 사용자 제스처로 오디오 활성화
+    if (sttSupported && !micReady) {
+      ensureMicPermission().then((ok) => {
+        if (!ok) {
+          showKeyboard(true);
+          openHelp();
+        }
+      });
+    }
     newRound();
   });
   $("#again-btn").addEventListener("click", newRound);
@@ -626,6 +677,21 @@ function init() {
     $("#type-input").value = "";
     if (word) handlePlayerWord(word);
   });
+
+  detectInApp();
+  $("#help-btn").addEventListener("click", openHelp);
+  $("#help-close-btn").addEventListener("click", () => $("#help-overlay").classList.add("hidden"));
+  $("#mic-retry-btn").addEventListener("click", async () => {
+    const ok = await ensureMicPermission();
+    if (ok) {
+      $("#help-overlay").classList.add("hidden");
+      $("#help-retry-fail").classList.add("hidden");
+      setStatus("🎉 마이크 준비 완료! 이제 말할 수 있어요!");
+    } else {
+      $("#help-retry-fail").classList.remove("hidden");
+    }
+  });
+  $("#copy-url-btn").addEventListener("click", copyGameUrl);
 
   if (!sttSupported) {
     $("#stt-warning").classList.remove("hidden");

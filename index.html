@@ -19,8 +19,16 @@
         <span class="vs">:</span>
         <span class="score com"><b id="score-computer">0</b> 🤖</span>
       </div>
-      <button id="settings-btn" class="icon-btn" title="설정">⚙️</button>
+      <div class="hdr-btns">
+        <button id="help-btn" class="icon-btn" title="도움말">❓</button>
+        <button id="settings-btn" class="icon-btn" title="설정">⚙️</button>
+      </div>
     </header>
+
+    <div id="inapp-banner" class="warning banner hidden">
+      📢 카카오톡·카메라 앱 속 브라우저에서는 마이크가 안 될 수 있어요!<br />
+      메뉴(⋮ 또는 공유 버튼)에서 <b>'다른 브라우저로 열기'</b> → <b>크롬</b>을 선택해 주세요.
+    </div>
 
     <!-- 단어 체인 (채팅처럼) -->
     <main id="chat"></main>
@@ -103,6 +111,23 @@
       <p id="end-count" class="count"></p>
       <button id="again-btn" class="primary">한 판 더! 🔄</button>
       <button id="home-btn" class="secondary">처음으로</button>
+    </div>
+  </div>
+
+  <!-- 마이크 도움말 -->
+  <div id="help-overlay" class="overlay hidden">
+    <div class="card">
+      <div class="big-emoji">🎤</div>
+      <h1>마이크가 안 되나요?</h1>
+      <ul class="help-list">
+        <li>📱 <b>카카오톡·카메라 앱</b>으로 열었다면<br />메뉴(⋮ 또는 공유)에서 <b>'다른 브라우저로 열기'</b> → <b>크롬</b> 선택!</li>
+        <li>🔒 <b>크롬인데도 안 되면</b><br />주소창의 자물쇠(🔒)를 눌러 <b>마이크 → 허용</b>으로 바꾸고 새로고침!</li>
+        <li>🍎 <b>아이폰 사파리</b>는 음성 인식이 안 돼요<br />⌨️ 키보드 버튼으로 똑같이 놀 수 있어요!</li>
+      </ul>
+      <p id="help-retry-fail" class="retry-fail hidden">아직 안 돼요 😢 위 방법을 확인해 주세요!</p>
+      <button id="mic-retry-btn" class="primary">🎤 마이크 다시 켜 보기</button>
+      <button id="copy-url-btn" class="secondary">🔗 게임 주소 복사하기</button>
+      <button id="help-close-btn" class="secondary">닫기</button>
     </div>
   </div>
 
