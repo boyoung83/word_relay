@@ -204,7 +204,7 @@ function startListening() {
     recognizing = false;
     setMicState("idle");
     if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
-      setStatus("🚫 마이크를 사용할 수 없어요.");
+      setStatus(`🚫 마이크를 사용할 수 없어요. (원인: ${ev.error})`);
       showKeyboard(true);
       openHelp();
     } else if (ev.error === "audio-capture") {
@@ -265,7 +265,93 @@ function openHelp() {
 // 카카오톡·네이버·인스타그램 등 인앱 브라우저는 마이크를 막는 경우가 많다
 const INAPP_RE = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|; wv\)/i;
 function detectInApp() {
-  if (INAPP_RE.test(navigator.userAgent)) $("#inapp-banner").classList.remove("hidden");
+  const ua = navigator.userAgent;
+  let msg = null;
+  if (INAPP_RE.test(ua)) {
+    msg = "카카오톡·카메라 앱 속 브라우저에서는 마이크가 안 될 수 있어요!<br />메뉴(⋮ 또는 공유 버튼)에서 <b>'다른 브라우저로 열기'</b> → <b>크롬</b>을 선택해 주세요.";
+  } else if (/SamsungBrowser/i.test(ua)) {
+    msg = "삼성 인터넷 브라우저에서는 음성 인식이 안 돼요!<br /><b>크롬(Chrome)</b> 앱으로 열어 주세요.";
+  } else if (/whale/i.test(ua)) {
+    msg = "웨일 브라우저에서는 음성 인식이 안 될 수 있어요!<br /><b>크롬(Chrome)</b> 앱으로 열어 주세요.";
+  }
+  if (msg) {
+    const b = $("#inapp-banner");
+    b.innerHTML = "📢 " + msg;
+    b.classList.remove("hidden");
+  }
+}
+
+// 마이크 자가 진단: 무엇이 문제인지 단계별로 검사해서 보여준다
+async function runMicDiagnosis() {
+  const out = [];
+  const ua = navigator.userAgent;
+
+  if (/SamsungBrowser/i.test(ua)) out.push("❌ 삼성 인터넷 브라우저예요 → 크롬으로 열어 주세요!");
+  else if (/whale/i.test(ua)) out.push("❌ 웨일 브라우저예요 → 크롬으로 열어 주세요!");
+  else if (INAPP_RE.test(ua)) out.push("❌ 앱 속 브라우저예요 → 메뉴에서 '다른 브라우저로 열기' → 크롬!");
+
+  if (!SR) {
+    out.push("❌ 이 브라우저에는 음성 인식 기능이 없어요. (아이폰은 미지원)");
+    return out;
+  }
+  out.push("✅ 음성 인식 기능이 있는 브라우저예요.");
+
+  let permState = null;
+  try {
+    const st = await navigator.permissions.query({ name: "microphone" });
+    permState = st.state;
+    if (st.state === "granted") out.push("✅ 사이트 마이크 권한: 허용");
+    else if (st.state === "denied") out.push("❌ 사이트 마이크 권한: 차단됨");
+    else out.push("⚠️ 사이트 마이크 권한: 아직 안 물어봤어요 (검사를 계속할게요)");
+  } catch (e) { /* 일부 브라우저는 조회 미지원 */ }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    out.push("✅ 마이크 장치: 정상 작동");
+  } catch (e) {
+    if (e.name === "NotAllowedError") {
+      if (permState === "prompt") {
+        out.push("❌ 허용을 물어보지도 않고 차단됐어요 → 크롬의 마이크가 <b>전체 차단</b>된 상태예요!");
+      } else {
+        out.push("❌ 마이크 접근이 차단됐어요.");
+      }
+      out.push("👉 크롬 메뉴(⋮) → 설정 → 사이트 설정 → 마이크: <b>'먼저 확인'</b>을 켜고, <b>차단됨 목록</b>에 이 사이트가 있으면 지워 주세요.");
+      out.push("👉 PC 크롬은 주소창에 <b>chrome://settings/content/microphone</b> 입력!");
+      out.push("👉 안드로이드는 휴대폰 설정 → 애플리케이션 → Chrome → 권한 → 마이크도 '허용'인지 확인!");
+    }
+    else if (e.name === "NotFoundError") out.push("❌ 마이크 장치를 찾을 수 없어요.");
+    else if (e.name === "NotReadableError") out.push("❌ 다른 앱이 마이크를 쓰고 있어요. 다른 앱을 끄고 다시 해 보세요!");
+    else out.push(`❌ 마이크 오류: ${e.name}`);
+    return out;
+  }
+
+  // 음성 인식 서비스가 실제로 시작되는지 확인
+  await new Promise((resolve) => {
+    const r = new SR();
+    r.lang = "ko-KR";
+    let done = false;
+    const finish = (line) => {
+      if (done) return;
+      done = true;
+      if (line) out.push(line);
+      try { r.abort(); } catch (e) { /* 무시 */ }
+      resolve();
+    };
+    r.onstart = () => finish("✅ 음성 인식 서비스: 정상! 이제 될 거예요. 🎉");
+    r.onerror = (ev) => {
+      if (ev.error === "service-not-allowed")
+        finish("❌ 음성 인식 서비스가 차단됐어요 → 휴대폰 설정 → 애플리케이션에서 'Chrome'과 'Google' 앱의 마이크 권한을 모두 '허용'으로!");
+      else if (ev.error === "not-allowed")
+        finish("❌ 음성 인식이 차단됐어요 (not-allowed) → 휴대폰 설정 → 애플리케이션 → Chrome → 권한 → 마이크 '허용'!");
+      else if (ev.error === "network")
+        finish("❌ 인터넷 연결이 필요해요. 와이파이/데이터를 확인해 주세요!");
+      else finish(`⚠️ 음성 인식 오류: ${ev.error}`);
+    };
+    setTimeout(() => finish("⚠️ 음성 인식 서비스가 응답하지 않아요. 인터넷 연결을 확인해 주세요."), 5000);
+    try { r.start(); } catch (e) { finish(`❌ 음성 인식 시작 실패: ${e.message}`); }
+  });
+  return out;
 }
 
 async function copyGameUrl() {
@@ -692,6 +778,18 @@ function init() {
     }
   });
   $("#copy-url-btn").addEventListener("click", copyGameUrl);
+  $("#diag-btn").addEventListener("click", async () => {
+    const btn = $("#diag-btn");
+    const box = $("#diag-result");
+    btn.disabled = true;
+    btn.textContent = "🩺 검사 중...";
+    box.classList.remove("hidden");
+    box.innerHTML = "잠시만요...";
+    const lines = await runMicDiagnosis();
+    box.innerHTML = lines.map((l) => `<div>${l}</div>`).join("");
+    btn.disabled = false;
+    btn.textContent = "🩺 다시 검사하기";
+  });
 
   if (!sttSupported) {
     $("#stt-warning").classList.remove("hidden");
