@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>말로 하는 끝말잇기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- 헤더 -->
+    <header>
+      <div class="brand">🎤 끝말잇기</div>
+      <div class="scoreboard">
+        <span class="score me">🦁 <b id="score-player">0</b></span>
+        <span class="vs">:</span>
+        <span class="score com"><b id="score-computer">0</b> 🤖</span>
+      </div>
+      <button id="settings-btn" class="icon-btn" title="설정">⚙️</button>
+    </header>
+
+    <!-- 단어 체인 (채팅처럼) -->
+    <main id="chat"></main>
+
+    <!-- 하단 조작부 -->
+    <footer>
+      <div id="stt-warning" class="warning hidden">
+        ⚠️ 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(Chrome)에서 열면 말로 할 수 있어요! 지금은 키보드로 입력해 주세요.
+      </div>
+      <div class="status-row">
+        <div id="status">▶️ 시작 버튼을 눌러 주세요!</div>
+        <div id="timer"></div>
+      </div>
+      <div class="controls">
+        <button id="hint-btn" class="side-btn" title="힌트">💡<span>힌트</span></button>
+        <button id="replay-btn" class="side-btn" title="다시 듣기">🔊<span>다시 듣기</span></button>
+        <button id="mic-btn" class="mic">
+          <span class="mic-icon">🎤</span>
+          <span id="mic-label">말하기</span>
+        </button>
+        <button id="giveup-btn" class="side-btn" title="모르겠어요">🙈<span>몰라요</span></button>
+        <button id="kb-btn" class="side-btn" title="키보드로 입력">⌨️<span>키보드</span></button>
+      </div>
+      <form id="type-form" class="hidden" autocomplete="off">
+        <input id="type-input" type="text" placeholder="단어를 입력하세요" enterkeyhint="send" />
+        <button type="submit">보내기</button>
+      </form>
+    </footer>
+  </div>
+
+  <!-- 시작 화면 -->
+  <div id="start-overlay" class="overlay">
+    <div class="card">
+      <div class="big-emoji">🎤🦁</div>
+      <h1>말로 하는<br />끝말잇기</h1>
+      <p class="subtitle">마이크에 대고 단어를 말해 봐!</p>
+
+      <div class="opt">
+        <label>누가 먼저 할까?</label>
+        <div id="opt-starter" class="segmented">
+          <button data-value="player" class="on">🦁 나부터</button>
+          <button data-value="computer">🤖 컴퓨터부터</button>
+        </div>
+      </div>
+      <div class="opt">
+        <label>컴퓨터 실력</label>
+        <div id="opt-difficulty" class="segmented">
+          <button data-value="easy" class="on">🐣 쉬움</button>
+          <button data-value="normal">🐥 보통</button>
+          <button data-value="hard">🦅 어려움</button>
+        </div>
+      </div>
+      <div class="opt">
+        <label>대답 시간</label>
+        <div id="opt-timer" class="segmented">
+          <button data-value="0" class="on">없음</button>
+          <button data-value="30">30초</button>
+          <button data-value="20">20초</button>
+          <button data-value="10">10초</button>
+        </div>
+      </div>
+      <div class="opt">
+        <label>사전에 있는 단어만 인정</label>
+        <div id="opt-strict" class="segmented">
+          <button data-value="false" class="on">아니요</button>
+          <button data-value="true">네</button>
+        </div>
+      </div>
+
+      <button id="start-btn" class="primary">시작하기! 🚀</button>
+    </div>
+  </div>
+
+  <!-- 라운드 종료 화면 -->
+  <div id="end-overlay" class="overlay hidden">
+    <div class="card">
+      <div id="end-emoji" class="big-emoji">🏆</div>
+      <h1 id="end-title"></h1>
+      <p id="end-reason" class="subtitle"></p>
+      <p id="end-count" class="count"></p>
+      <button id="again-btn" class="primary">한 판 더! 🔄</button>
+      <button id="home-btn" class="secondary">처음으로</button>
+    </div>
+  </div>
+
+  <canvas id="confetti" class="hidden"></canvas>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
