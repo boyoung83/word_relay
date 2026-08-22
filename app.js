@@ -340,10 +340,12 @@ async function runMicDiagnosis() {
     };
     r.onstart = () => finish("✅ 음성 인식 서비스: 정상! 이제 될 거예요. 🎉");
     r.onerror = (ev) => {
-      if (ev.error === "service-not-allowed")
-        finish("❌ 음성 인식 서비스가 차단됐어요 → 휴대폰 설정 → 애플리케이션에서 'Chrome'과 'Google' 앱의 마이크 권한을 모두 '허용'으로!");
-      else if (ev.error === "not-allowed")
-        finish("❌ 음성 인식이 차단됐어요 (not-allowed) → 휴대폰 설정 → 애플리케이션 → Chrome → 권한 → 마이크 '허용'!");
+      if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
+        finish(`❌ 마이크는 되는데 <b>음성 인식 서비스</b>만 차단됐어요. (${ev.error})`);
+        out.push("👉 안드로이드 크롬은 음성 인식을 <b>'Google' 앱</b>에 맡겨요. 휴대폰 <b>설정 → 애플리케이션 → Google → 권한 → 마이크</b>를 '허용'으로 바꿔 주세요!");
+        out.push("👉 바꾼 뒤 크롬을 완전히 껐다가 다시 열어 주세요.");
+        out.push("👉 그래도 안 되면: 설정 → 애플리케이션 → <b>Google Play 서비스</b> → 권한 → 마이크도 '허용'!");
+      }
       else if (ev.error === "network")
         finish("❌ 인터넷 연결이 필요해요. 와이파이/데이터를 확인해 주세요!");
       else finish(`⚠️ 음성 인식 오류: ${ev.error}`);
