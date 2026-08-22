@@ -20,7 +20,7 @@
 
 <img src="qr-card.png" alt="끝말잇기 QR 카드" width="360" />
 
-- QR은 배포된 게임 페이지로 연결됩니다: https://claude.ai/code/artifact/be15d134-32e3-4589-9aa7-618a59584ca8
+- QR은 배포된 게임 페이지로 연결됩니다: https://boyoung83.github.io/word_relay/
 - 프린트해서 냉장고에 붙여 두기 좋은 `qr-card.png`, 순수 QR만 있는 `qr-code.png` 두 가지가 있어요.
 - 음성 인식은 안드로이드 **크롬**에서 잘 동작합니다. (iOS 사파리는 키보드 입력 모드로 자동 전환)
 
